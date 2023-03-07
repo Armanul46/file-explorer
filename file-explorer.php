@@ -109,7 +109,7 @@ function my_file_explorer_page() {
             } else {
                 echo '<td><a href="' . add_query_arg( 'file', $directory . '/' . $file, $settings_page_link ) . '">'. esc_html( $file ) .'</a></td>';
             }
-            echo '<td><a href="' . add_query_arg( 'delete', $directory . '/' . $file, $settings_page_link ) . '">delete</a></td>';
+            echo '<td><a href="' . add_query_arg( 'delete', $directory . '/' . $file ) . '">delete</a></td>';
         }
         
         
