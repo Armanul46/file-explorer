@@ -24,8 +24,16 @@ add_action('admin_menu', 'my_file_explorer_menu');
 // Create the file explorer page
 function my_file_explorer_page() {
 
-    if( ! empty( $_POST['delete'] ) ) {
-        $delete_file = ! empty( $_POST['delete'] ) ? $_POST['delete'] : '';
+    if( ! empty( $_GET['delete'] ) ) {
+
+        $delete = $_GET['delete'];
+        if( is_file( $delete ) ) {
+            unlink( $delete );
+            echo "deleted successfully";
+        } else {
+            delete_dir( $delete );
+            echo "deleted successfully";
+        }
         
         
     }
@@ -62,7 +70,29 @@ function my_file_explorer_page() {
         
     }
     $files = scandir( $directory );
-   
+    $settings_page_link = admin_url( 'admin.php?page=my-file-explorer' );
+    
+    
+    // add file / folder 
+    if ( ! empty( $_POST['submit'] ) && ! empty( $_FILES['file_upload'] ) ) {
+        $file_upload = $_FILES['file_upload'];
+        foreach( $file_upload['name'] as $key => $value ) {
+            $target_dir = $directory;
+            $target_file = $target_dir . '/' . basename( $value );
+            
+            if( move_uploaded_file( $file_upload['tmp_name'][$key], $target_file ) ) {
+                echo "File uploaded successfully.";
+            } else {
+                echo "Sorry, file not uploaded";
+            }
+        }
+    }
+   ?>
+    <form action="" method="post" enctype="multipart/form-data">
+        <input type="file" name="file_upload[]" id="file_upload">
+        <input type="submit" value="Upload File" name="submit">
+    </form>
+   <?php
    foreach ($files as $file) {
 
         if ( $file == '.' || $file == '..' || $file == '.tmb' ) {
@@ -71,17 +101,15 @@ function my_file_explorer_page() {
         echo "<tr>";
         if( empty( $_GET['path'] ) ) {
             if( is_dir( $directory . '/' . $file ) ) {
-                echo '<td><a href="' . add_query_arg( 'path', $directory . '/' . $file ) . '">'. esc_html( $file ) .'</a></td>';
-                echo '<td><a href="' . add_query_arg( 'delete', $directory . '/' . $file ) . '">delete</a></td>';
+                echo '<td><a href="' . add_query_arg( 'path', $directory . '/' . $file, $settings_page_link ) . '">'. esc_html( $file ) .'</a></td>';
             }
         } else {
             if( is_dir( $directory . '/' . $file ) ) {
-                echo '<td><a href="' . add_query_arg( 'path', $directory . '/' . $file ) . '">'. esc_html( $file ).'</a></td>';
-                echo '<td><a href="' . add_query_arg( 'delete', $directory . '/' . $file ) . '">delete</a></td>';
+                echo '<td><a href="' . add_query_arg( 'path', $directory . '/' . $file, $settings_page_link ) . '">'. esc_html( $file ).'</a></td>';
             } else {
-                echo '<td><a href="' . add_query_arg( 'file', $directory . '/' . $file ) . '">'. esc_html( $file ) .'</a></td>';
-                echo '<td><a href="' . add_query_arg( 'delete', $directory . '/' . $file ) . '">delete</a></td>';
+                echo '<td><a href="' . add_query_arg( 'file', $directory . '/' . $file, $settings_page_link ) . '">'. esc_html( $file ) .'</a></td>';
             }
+            echo '<td><a href="' . add_query_arg( 'delete', $directory . '/' . $file, $settings_page_link ) . '">delete</a></td>';
         }
         
         
@@ -92,4 +120,23 @@ function my_file_explorer_page() {
    echo "</tr></table>";
 
     
+}
+
+function delete_dir( $path ) {
+    $files_path = scandir( $path );
+
+    if( count( $files_path ) > 2 ) {
+        foreach( $files_path as $file ) {
+            if( '.' != $file && '..' != $file ) {
+                $file_path = $path . DIRECTORY_SEPARATOR . $file;
+                
+                if( is_dir( $file_path ) ) {
+                    delete_dir( $file_path );
+                }else{
+                    unlink( $file_path );
+                }
+            }
+        }
+    }
+   rmdir( $path );
 }
